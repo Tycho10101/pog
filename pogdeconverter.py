@@ -1,5 +1,6 @@
 import os, sys
 from PIL import Image
+import lzma
 
 def hex_to_rgba(hex_color):
     if len(hex_color) == 8:
@@ -17,9 +18,14 @@ def get_4_bytes(byte_data, start_index):
     return byte_data[start_index:start_index + 4]
 
 pogfile = open(sys.argv[1], "rb")
-size = pogfile.read(8)
+ver = pogfile.read(4)
 pog = pogfile.read()
 pogfile.close()
+ver = ver[3]
+if ver == 1:
+    pog = lzma.decompress(pog)
+size = pog[0:8]
+pog = pog[8:len(pog)]
 
 width = size[0:4]
 height = size[4:8]
