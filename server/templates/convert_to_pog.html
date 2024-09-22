@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Convert to .pog</title>
+</head>
+<body>
+    <h1>Convert Image to .pog</h1>
+
+    <!-- Flash Message for Resizing -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="flash-message">
+          {% for message in messages %}
+            <p>{{ message }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+	<form action="/process_pog" method="post" enctype="multipart/form-data">
+		<label for="image">Upload an image:</label>
+		<input type="file" id="image" name="image" accept="image/*" required><br><br>
+
+		<label for="compression">Compression:</label>
+		<select id="compression" name="compression">
+			<option value="none">No Compression</option>
+			<option value="lzma" selected>LZMA Compression</option> <!-- LZMA selected by default -->
+		</select><br><br>
+
+		<input type="submit" value="Convert to .pog">
+	</form>
+    <a href="/">Go back</a>
+</body>
+</html>

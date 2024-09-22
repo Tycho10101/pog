@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <title>Pog File Converter</title>
+</head>
+<body>
+    <h1>Welcome to the Pog Converter</h1>
+    <nav>
+        <a href="/convert_to_pog">Convert Image to .pog</a>
+        <a href="/convert_to_image">Convert .pog to Image</a>
+        <a href="/view_pog">View .pog as Image</a>
+    </nav>
+
+    <!-- View on GitHub button -->
+    <div>
+        <a href="https://github.com/Tycho10101/pog" target="_blank" style="text-decoration: none;">
+            <button style="background-color: #333; color: white; padding: 10px 20px; border: none; cursor: pointer;">
+                View on GitHub
+            </button>
+        </a>
+    </div>
+
+    <!-- GitHub Stats (using Shields.io badges) -->
+    <div style="margin-top: 20px;">
+        <img src="https://img.shields.io/github/stars/Tycho10101/pog?style=social" alt="GitHub Stars">
+        <img src="https://img.shields.io/github/forks/Tycho10101/pog?style=social" alt="GitHub Forks">
+        <img src="https://img.shields.io/github/issues/Tycho10101/pog" alt="GitHub Issues">
+        <img src="https://img.shields.io/github/last-commit/Tycho10101/pog" alt="Last Commit">
+    </div>
+</body>
+</html>
