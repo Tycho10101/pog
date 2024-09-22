@@ -5,6 +5,9 @@ Also known as POGIFF or POG.
 
 Based on [this repo](https://github.com/Tycho10101/bruh-python)
 
+## File size comparison
+![Bar Graph](/docs/bar-graph.png "Bar Graph")
+
 ## Requirements
 - Pillow
 
