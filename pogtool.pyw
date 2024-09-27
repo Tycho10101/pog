@@ -89,11 +89,20 @@ class POGConverterApp:
         )
         self.export_pog_button.pack(pady=5)
 
-        self.export_image_button = tk.Button(
-            self.options_frame, text="Export as Image", command=lambda: self.export_file("image"),
+        # Export as PNG button
+        self.export_png_button = tk.Button(
+            self.options_frame, text="Export as PNG", command=lambda: self.export_file("png"),
             bg=self.button_bg_color, fg=self.fg_color
         )
-        self.export_image_button.pack(pady=5)
+        self.export_png_button.pack(pady=5)
+
+        # Export to... dropdown menu
+        self.export_menu_label = tk.Label(self.options_frame, text="Export to...", bg=self.bg_color, fg=self.fg_color)
+        self.export_menu_label.pack(pady=5)
+        
+        self.export_menu = ttk.Combobox(self.options_frame, values=["ICO", "JPEG", "BMP", "ICNS", "WEBP"])
+        self.export_menu.pack(pady=5)
+        self.export_menu.bind("<<ComboboxSelected>>", self.export_other)
 
     def open_file(self):
         # Allow the user to select an image file to open
@@ -162,7 +171,6 @@ class POGConverterApp:
         except Exception as e:
             print(f"Error loading POG file: {e}")
 
-
     def display_image(self, img):
         # Resize the image based on zoom level and display it on the canvas
         width, height = img.size
@@ -196,25 +204,45 @@ class POGConverterApp:
         if file_type == "pog":
             ext = ".pog"
             filetypes = [("POG files", "*.pog")]  # Only POG files
-        elif file_type == "image":
+        elif file_type == "png":
             ext = ".png"  # Default to PNG for images
-            filetypes = [("Image files", "*.png;*.jpg;*.jpeg;*.bmp;*.ico;*.icns;*.webp")]
+            filetypes = [("PNG files", "*.png")]
 
         save_path = filedialog.asksaveasfilename(defaultextension=ext,
                                                filetypes=filetypes)
         if save_path:
             if file_type == "pog":
                 self.save_as_pog(save_path)
-            elif file_type == "image":
-                self.save_as_image(save_path)
+            elif file_type == "png":
+                self.save_as_image(save_path, "png")
 
+    def export_other(self, event):
+        # Export the image in the selected format from the dropdown
+        selected_format = self.export_menu.get().lower()
+        if selected_format:
+            save_path = filedialog.asksaveasfilename(defaultextension=f".{selected_format}",
+                                                       filetypes=[(f"{selected_format.upper()} files", f"*.{selected_format}")])
+            if save_path:
+                self.save_as_image(save_path, selected_format)
+
+    def save_as_image(self, save_path, file_format):
+        if self.original_image:
+            try:
+                self.original_image.save(save_path, file_format.upper())
+                messagebox.showinfo("Success", f"File saved as {file_format.upper()}!")
+            except Exception as e:
+                messagebox.showerror("Error", f"Error saving image: {e}")
 
     def save_as_pog(self, save_path):
         # Save the current image as a .pog file (custom format)
         try:
             # Get the width and height of the original image
+            self.original_image = self.original_image.convert('RGBA')
             width, height = self.original_image.size
-            header = b'POG' + bytes([1])  # Example header with compression flag set to 1
+            if self.compression_var.get():
+                header = b'POG' + bytes([1])  
+            else:
+                header = b'POG' + bytes([0]) 
 
             # Create pixel data
             pixel_data = b''.join(
@@ -235,60 +263,29 @@ class POGConverterApp:
         except Exception as e:
             print(f"Error saving POG file: {e}")
 
-
-    def save_as_image(self, save_path):
-        # Save the current image in any supported format
-        try:
-            if self.original_image:
-                self.original_image.save(save_path)
-                messagebox.showinfo("Success", f"Image saved successfully to {save_path}")
-            else:
-                messagebox.showerror("Error", "No image to save.")
-        except Exception as e:
-            messagebox.showerror("Error", f"Error saving image: {e}")
-
     def detect_dark_mode(self):
         if platform.system() == "Windows":
-            return self.is_windows_dark_mode()
+            try:
+                import winreg
+                registry = winreg.ConnectRegistry(None, winreg.HKEY_CURRENT_USER)
+                reg_key = winreg.OpenKey(registry, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
+                value, _ = winreg.QueryValueEx(reg_key, "AppsUseLightTheme")
+                return value == 0
+            except Exception as e:
+                print(f"Error detecting dark mode: {e}")
         elif platform.system() == "Darwin":
-            return self.is_macos_dark_mode()
-        elif platform.system() == "Linux":
-            return self.is_linux_dark_mode()
-        else:
-            return False  # Assume light mode on other OSes
+            try:
+                result = subprocess.run(
+                    ["defaults", "read", "-g", "AppleInterfaceStyle"],
+                    capture_output=True, text=True
+                )
+                return "Dark" in result.stdout
+            except Exception as e:
+                print(f"Error detecting dark mode: {e}")
 
-    def is_windows_dark_mode(self):
-        try:
-            import winreg
-            key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
-            value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
-            winreg.CloseKey(key)
-            return value == 0  # 0 means dark mode, 1 means light mode
-        except Exception as e:
-            print(f"Error reading Windows registry: {e}")
-            return False
+        return False
 
-    def is_macos_dark_mode(self):
-        try:
-            cmd = 'defaults read -g AppleInterfaceStyle'
-            result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            return result.stdout.strip() == b"Dark"
-        except Exception as e:
-            print(f"Error checking macOS appearance: {e}")
-            return False
-
-    def is_linux_dark_mode(self):
-        try:
-            cmd = "gsettings get org.gnome.desktop.interface gtk-theme"
-            result = subprocess.run(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            theme = result.stdout.decode().strip().lower()
-            return "dark" in theme
-        except Exception as e:
-            print(f"Error checking Linux dark mode setting: {e}")
-            return False
-
-# Initialize the Tkinter app
-root = tk.Tk()
-root.iconbitmap("icon.ico")
-app = POGConverterApp(root)
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = POGConverterApp(root)
+    root.mainloop()
